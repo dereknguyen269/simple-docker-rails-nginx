@@ -1,0 +1,44 @@
+version: '3'
+services:
+  app:
+    build:
+      context: .
+      args:
+        RAILS_ENV: development
+    volumes:
+      - public_data:/opt/app/public
+      - ./log:/opt/app/log
+      - assets:/opt/app/public/assets
+    environment:
+      DATABASE_URL: 'mysql2://db_user:db_pass@db/db_name'
+      SECRET_KEY_BASE: ''
+    links:
+      - db
+    command: bundle exec rails s Puma -b 0.0.0.0
+  db:
+    image: mysql:5
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: db_pass
+      MYSQL_DATABASE: db_name
+      MYSQL_USER: db_user
+      MYSQL_PASSWORD: db_pass
+    command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci
+  web:
+    build: containers/nginx
+    volumes:
+      - ./log:/opt/app/log
+      - ./tmp:/opt/app/tmp
+      - public_data:/opt/app/public
+      - assets:/opt/app/public/assets
+    ports:
+      - "80:80"
+    links:
+      - app
+volumes:
+  assets:
+    external: false
+  db_data:
+  cache_data:
+  public_data:
